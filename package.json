@@ -1,0 +1,23 @@
+{
+  "name": "universal-copy",
+  "version": "1.0.1",
+  "description": "Deep copy anything.",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nrn/universal-copy"
+  },
+  "keywords": [
+    "universal",
+    "deep",
+    "copy"
+  ],
+  "author": "Nick Niemeir <nick.niemeir@gmail.com>",
+  "license": "ISC",
+  "devDependencies": {
+    "tape": "^4.2.2"
+  }
+}
