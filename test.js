@@ -2,6 +2,9 @@ var test = require('tape')
 var copy = require('./index')
 
 test('deep-copy', function (t) {
+  var sym1 = Symbol('foo')
+  var sym2 = Symbol('bar')
+
   // values
   t.equal(copy('bar'), 'bar', 'Returns strings')
   t.equal(copy(2), 2, 'Returns numbers')
@@ -11,13 +14,12 @@ test('deep-copy', function (t) {
   t.ok(isNaN(copy(NaN)), 'Returns NaN')
   t.equal(copy(add), add, 'Return functions as they were passed')
   function add (a, b) { return a + b }
+  t.equal(copy(sym1), sym1, 'symbols return equal')
 
   // objects
   var obj = {
     foo: { bar: 'baz' }
   }
-  var sym1 = Symbol('foo')
-  var sym2 = Symbol('bar')
   obj[sym1] = 'symbol'
   obj[sym2] = { key: 'value' }
   var copyOfObj = copy(obj)

@@ -2,6 +2,7 @@ var values = {
   'string': true,
   'number': true,
   'boolean': true,
+  'symbol': true,
   // Kinda a lie, but returning the functions unmodified
   // leads to the least confusing behavior.
   'function': true
