@@ -54,10 +54,26 @@ test('deep-copy', function (t) {
   var date = new Date(1234567890)
   t.equal(copy(date).getTime(), date.getTime(), 'copy date')
 
-  var typedA = new Int8Array(8)
-  var typedB = copy(typedA)
-  t.equal(typedB.length, 8, 'Correct length')
-  t.notEqual(typedA, typedB, 'Typed arrays not the same obj.')
+  ;[
+    Int8Array,
+    Uint8Array,
+    Uint8ClampedArray,
+    Int16Array,
+    Uint16Array,
+    Int32Array,
+    Uint32Array,
+    Float32Array,
+    Float64Array
+  ].forEach(function (TypedArr) {
+    var typedA = new TypedArr(8)
+    typedA[0] = 1
+    var typedB = copy(typedA)
+    typedB[1] = 1
+    t.equal(typedB.length, 8, 'Correct length')
+    t.equal(typedB[0], 1, 'Correct stuff')
+    t.equal(typedA[1], 0, 'Does not change old array')
+    t.notEqual(typedA, typedB, 'Typed arrays not the same obj.')
+  })
 
   // sets and maps
   var setA = new Set()
@@ -85,7 +101,10 @@ test('deep-copy', function (t) {
   t.equal(bufA.byteLength, bufB.byteLength, 'same length')
 
   // regexp
-  var reg = /^asdf asdf/gim
-  t.equal('asdf AsDf\nAsdf asdf'.match(copy(reg)).length, 2, 'copy regexp w/ flags')
+  var regA = /^asdf asdf/gim
+  var regB = copy(regA)
+
+  t.equal('asdf AsDf\nAsdf asdf'.match(regB).length, 2, 'copy regexp w/ flags')
+  t.notEqual(regB, regA, 'Objects not the same')
   t.end()
 })
