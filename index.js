@@ -10,9 +10,13 @@ var values = {
 }
 
 var howDoICopy = {
-  '[object Array]': copyObject,
   '[object Object]': copyObject,
+  '[object Array]': copyObject,
+  '[object Map]': copyMap,
+  '[object Set]': copySet,
+  '[object Date]': copyConstructor,
   '[object RegExp]': copyConstructor,
+  '[object ArrayBuffer]': copySlice,
   '[object Int8Array]': copyConstructor,
   '[object Uint8Array]': copyConstructor,
   '[object Uint8ClampedArray]': copyConstructor,
@@ -21,10 +25,7 @@ var howDoICopy = {
   '[object Int32Array]': copyConstructor,
   '[object Uint32Array]': copyConstructor,
   '[object Float32Array]': copyConstructor,
-  '[object Float64Array]': copyConstructor,
-  '[object Set]': copySet,
-  '[object Map]': copyMap,
-  '[object ArrayBuffer]': copySlice
+  '[object Float64Array]': copyConstructor
 }
 
 module.exports = universalCopy
@@ -41,21 +42,17 @@ function deepCopy (original, seen, copies) {
   if (original == null || type in values) {
     return original
   }
+
   // if this object has already been copied during
   // this deep copy, use that first copy.
   var idx = seen.indexOf(original)
   if (idx !== -1) {
     return copies[idx]
   }
-  if (original instanceof Date) {
-    return copyConstructor(original, seen, copies)
-  }
 
   var copyX = howDoICopy[toStr(original)]
-  if (copyX) return copyX(original, seen, copies)
-
   // if none of the special cases hit, copy original as a generic object.
-  return copyObject(original, seen, copies)
+  return (copyX || copyObject)(original, seen, copies)
 }
 
 function copyConstructor (original, seen, copies) {
