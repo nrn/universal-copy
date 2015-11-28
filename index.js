@@ -9,17 +9,22 @@ var values = {
   'function': true
 }
 
-var canibals = {
-  '[object RegExp]': true,
-  '[object Int8Array]': true,
-  '[object Uint8Array]': true,
-  '[object Uint8ClampedArray]': true,
-  '[object Int16Array]': true,
-  '[object Uint16Array]': true,
-  '[object Int32Array]': true,
-  '[object Uint32Array]': true,
-  '[object Float32Array]': true,
-  '[object Float64Array]': true
+var howDoICopy = {
+  '[object Array]': copyObject,
+  '[object Object]': copyObject,
+  '[object RegExp]': copyConstructor,
+  '[object Int8Array]': copyConstructor,
+  '[object Uint8Array]': copyConstructor,
+  '[object Uint8ClampedArray]': copyConstructor,
+  '[object Int16Array]': copyConstructor,
+  '[object Uint16Array]': copyConstructor,
+  '[object Int32Array]': copyConstructor,
+  '[object Uint32Array]': copyConstructor,
+  '[object Float32Array]': copyConstructor,
+  '[object Float64Array]': copyConstructor,
+  '[object Set]': copySet,
+  '[object Map]': copyMap,
+  '[object ArrayBuffer]': copySlice
 }
 
 module.exports = universalCopy
@@ -36,48 +41,58 @@ function deepCopy (original, seen, copies) {
   if (original == null || type in values) {
     return original
   }
-
   // if this object has already been copied during
   // this deep copy, use that first copy.
   var idx = seen.indexOf(original)
   if (idx !== -1) {
     return copies[idx]
   }
-  var str = toStr(original)
-  var copy
-  if (str in canibals || original instanceof Date) {
-    copy = new original.constructor(original)
-    seen.push(original)
-    copies.push(copy)
-    return copy
-  } else if (str === '[object ArrayBuffer]') {
-    copy = original.slice()
-    seen.push(original)
-    copies.push(copy)
-    return copy
-  } else if (str === '[object Set]') {
-    copy = new (original.constructor || Set)
-    seen.push(original)
-    copies.push(copy)
-    original.forEach(function (v) {
-      copy.add(deepCopy(v, seen, copies))
-    })
-    return copy
-  } else if (str === '[object Map]') {
-    copy = new (original.constructor || Map)
-    seen.push(original)
-    copies.push(copy)
-    original.forEach(function (v, k) {
-      copy.set(deepCopy(k, seen, copies), deepCopy(v, seen, copies))
-    })
-    return copy
+  if (original instanceof Date) {
+    return copyConstructor(original, seen, copies)
   }
 
+  var copyX = howDoICopy[toStr(original)]
+  if (copyX) return copyX(original, seen, copies)
+
   // if none of the special cases hit, copy original as a generic object.
-  return objectCopy(original, seen, copies)
+  return copyObject(original, seen, copies)
 }
 
-function objectCopy (original, seen, copies) {
+function copyConstructor (original, seen, copies) {
+  var copy = new original.constructor(original)
+  seen.push(original)
+  copies.push(copy)
+  return copy
+}
+
+function copySet (original, seen, copies) {
+  var copy = new (original.constructor || Set)
+  seen.push(original)
+  copies.push(copy)
+  original.forEach(function (v) {
+    copy.add(deepCopy(v, seen, copies))
+  })
+  return copy
+}
+
+function copyMap (original, seen, copies) {
+  var copy = new (original.constructor || Map)
+  seen.push(original)
+  copies.push(copy)
+  original.forEach(function (v, k) {
+    copy.set(deepCopy(k, seen, copies), deepCopy(v, seen, copies))
+  })
+  return copy
+}
+
+function copySlice (original, seen, copies) {
+  var copy = original.slice()
+  seen.push(original)
+  copies.push(copy)
+  return copy
+}
+
+function copyObject (original, seen, copies) {
   var copy = new (original.constructor || Object)
   seen.push(original)
   copies.push(copy)
