@@ -31,10 +31,10 @@ var howDoICopy = {
 module.exports = universalCopy
 
 function universalCopy (anything) {
-  return deepCopy(anything, [], [])
+  return deepCopy(anything, new FakeMap())
 }
 
-function deepCopy (original, seen, copies) {
+function deepCopy (original, seen) {
   var type = typeof original
 
   // Don't need to do anything for values
@@ -45,54 +45,49 @@ function deepCopy (original, seen, copies) {
 
   // if this object has already been copied during
   // this deep copy, use that first copy.
-  var idx = seen.indexOf(original)
-  if (idx !== -1) {
-    return copies[idx]
+  var extantClone = seen.get(original)
+  if (typeof extantClone !== 'undefined') {
+    return extantClone
   }
 
   var copyX = howDoICopy[toStr(original)]
   // if none of the special cases hit, copy original as a generic object.
-  return (copyX || copyObject)(original, seen, copies)
+  return (copyX || copyObject)(original, seen)
 }
 
-function copyConstructor (original, seen, copies) {
+function copyConstructor (original, seen) {
   var copy = new original.constructor(original)
-  seen.push(original)
-  copies.push(copy)
+  seen.set(original, copy)
   return copy
 }
 
-function copySet (original, seen, copies) {
+function copySet (original, seen) {
   var copy = new (original.constructor || Set)
-  seen.push(original)
-  copies.push(copy)
+  seen.set(original, copy)
   original.forEach(function (v) {
-    copy.add(deepCopy(v, seen, copies))
+    copy.add(deepCopy(v, seen))
   })
   return copy
 }
 
-function copyMap (original, seen, copies) {
+function copyMap (original, seen) {
   var copy = new (original.constructor || Map)
-  seen.push(original)
-  copies.push(copy)
+  seen.set(original, copy)
   original.forEach(function (v, k) {
-    copy.set(deepCopy(k, seen, copies), deepCopy(v, seen, copies))
+    copy.set(deepCopy(k, seen), deepCopy(v, seen))
   })
   return copy
 }
 
-function copySlice (original, seen, copies) {
+function copySlice (original, seen) {
   var copy = original.slice()
-  seen.push(original)
-  copies.push(copy)
+  seen.set(original, copy)
   return copy
 }
 
-function copyObject (original, seen, copies) {
+function copyObject (original, seen) {
   var copy = new (original.constructor || Object)
-  seen.push(original)
-  copies.push(copy)
+  seen.set(original, copy)
 
   Object.getOwnPropertyNames(original).forEach(originalToCopy)
 
@@ -102,7 +97,7 @@ function copyObject (original, seen, copies) {
 
   function originalToCopy (key) {
     var descriptor = Object.getOwnPropertyDescriptor(original, key)
-    descriptor.value = deepCopy(descriptor.value, seen, copies)
+    descriptor.value = deepCopy(descriptor.value, seen)
     try {
       Object.defineProperty(copy, key, descriptor)
     } catch (e) {
@@ -117,4 +112,21 @@ function copyObject (original, seen, copies) {
 
 function toStr (thing) {
   return OPtoString.call(thing)
+}
+
+// Fake map only works for the few scenarios we need it for in this module.
+function FakeMap () {
+  if (typeof Map === 'function') return new Map()
+  this.keys = []
+  this.values = []
+}
+FakeMap.prototype.get = function (obj) {
+  var idx = this.keys.indexOf(obj)
+  if (idx !== -1) {
+    return this.values[idx]
+  }
+}
+FakeMap.prototype.set = function (key, value) {
+  this.keys.push(key)
+  this.values.push(value)
 }
