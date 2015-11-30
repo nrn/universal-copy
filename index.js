@@ -50,6 +50,13 @@ function deepCopy (original, seen) {
     return extantClone
   }
 
+  // Copy buffers correctly in pre-TypedArray node versions
+  if (original.constructor &&
+      original.constructor.isBuffer &&
+      original.constructor.isBuffer(original)) {
+    return copyConstructor(original, seen)
+  }
+
   var copyX = howDoICopy[toStr(original)]
   // if none of the special cases hit, copy original as a generic object.
   return (copyX || copyObject)(original, seen)

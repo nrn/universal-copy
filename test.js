@@ -69,11 +69,19 @@ test('deep-copy', function (t) {
     typedA[0] = 1
     var typedB = copy(typedA)
     typedB[1] = 1
-    t.equal(typedB.length, 8, 'Correct length')
-    t.equal(typedB[0], 1, 'Correct stuff')
-    t.equal(typedA[1], 0, 'Does not change old array')
-    t.notEqual(typedA, typedB, 'Typed arrays not the same obj.')
+    t.equal(typedB.length, 8, TypedArr.name + ': Correct length')
+    t.equal(typedB[0], 1, TypedArr.name + ': Correct stuff')
+    t.equal(typedA[1], 0, TypedArr.name + ': Does not change old array')
+    t.notEqual(typedA, typedB, TypedArr.name + ': not the same obj.')
   })
+
+  var typedA = new Buffer('foobarbaz')
+  var typedB = copy(typedA)
+  typedB[1] = 122
+  t.equal(typedB.length, 9, Buffer.name + ': Correct length')
+  t.equal(typedB[0], 102, Buffer.name + ': Correct stuff')
+  t.equal(typedA[1], 111, Buffer.name + ': Does not change old array')
+  t.notEqual(typedA, typedB, Buffer.name + ': not the same obj.')
 
   // sets and maps
   var setA = new Set()
