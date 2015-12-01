@@ -1,6 +1,6 @@
 {
   "name": "universal-copy",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Deep copy anything.",
   "main": "index.js",
   "scripts": {

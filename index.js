@@ -87,7 +87,7 @@ function copyMap (original, seen) {
 }
 
 function copySlice (original, seen) {
-  var copy = original.slice()
+  var copy = original.slice(0)
   seen.set(original, copy)
   return copy
 }
