@@ -33,6 +33,12 @@ test('deep-copy', function (t) {
   t.ok(errB instanceof Error, 'err is Error')
   t.equal(errA.message, errB.message, 'Message is the same')
 
+  var noProtoA = Object.create(null)
+  noProtoA.asdf = 'qwerty'
+  var noProtoB = copy(noProtoA)
+  t.equal(noProtoB.asdf, 'qwerty', 'no proto copy has prop')
+  t.equal(typeof noProtoB.toString, 'undefined', 'Does not have a toString')
+
   // array
   var arrA = [ 1, 2, { asdf: 'aargh' } ]
   var arrB = copy(arrA)
@@ -110,7 +116,7 @@ test('deep-copy', function (t) {
     t.end()
   })
 
-  t.test('typedArray', { skip: typeof Symbol !== 'function' }, function (t) {
+  t.test('typedArray', { skip: typeof Int8Array !== 'function' }, function (t) {
     ;[
       Int8Array,
       Uint8Array,

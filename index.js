@@ -1,4 +1,6 @@
 var OPtoString = Object.prototype.toString
+var OPHas = Object.prototype.hasOwnProperty
+
 var values = {
   'string': true,
   'number': true,
@@ -16,6 +18,7 @@ var howDoICopy = {
   '[object Set]': copySet,
   '[object Date]': copyConstructor,
   '[object RegExp]': copyConstructor,
+  '[object Promise]': justDont,
   '[object ArrayBuffer]': copySlice,
   '[object Int8Array]': copyConstructor,
   '[object Uint8Array]': copyConstructor,
@@ -92,8 +95,27 @@ function copySlice (original, seen) {
   return copy
 }
 
+function justDont (original, seen) {
+  seen.set(original, original)
+  return original
+}
+
 function copyObject (original, seen) {
-  var copy = new (original.constructor || Object)
+  var proto = Object.getPrototypeOf(original)
+  var copy
+
+  if (proto == null) {
+    copy = Object.create(null)
+  } else if (has(proto, 'constructor')) {
+    try {
+      copy = new proto.constructor()
+    } catch (e) {
+      copy = Object.create(deepCopy(proto, seen))
+    }
+  } else {
+    copy = Object.create(deepCopy(proto, seen))
+  }
+
   seen.set(original, copy)
 
   Object.getOwnPropertyNames(original).forEach(originalToCopy)
@@ -119,6 +141,10 @@ function copyObject (original, seen) {
 
 function toStr (thing) {
   return OPtoString.call(thing)
+}
+
+function has (thing, prop) {
+  return OPHas.call(thing, prop)
 }
 
 // Fake map only works for the few scenarios we need it for in this module.
