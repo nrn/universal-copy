@@ -19,6 +19,8 @@ var howDoICopy = {
   '[object Date]': copyConstructor,
   '[object RegExp]': copyConstructor,
   '[object Promise]': justDont,
+  '[object XMLHttpRequest]': justDont,
+  '[object NodeList]': copyArray,
   '[object ArrayBuffer]': copySlice,
   '[object Int8Array]': copyConstructor,
   '[object Uint8Array]': copyConstructor,
@@ -60,6 +62,11 @@ function deepCopy (original, seen) {
     return copyConstructor(original, seen)
   }
 
+  if (typeof Element === 'function' &&
+      original instanceof Element) {
+    return cloneCopy(original, seen)
+  }
+
   var copyX = howDoICopy[toStr(original)]
   // if none of the special cases hit, copy original as a generic object.
   return (copyX || copyObject)(original, seen)
@@ -95,8 +102,20 @@ function copySlice (original, seen) {
   return copy
 }
 
+function copyArray (original, seen) {
+  var copy = []
+  seen.set(original, copy)
+  moveProps(original, copy, seen)
+  return copy
+}
+
+function cloneCopy (original, seen) {
+  var copy = original.cloneNode(true)
+  seen.set(original, copy)
+  return copy
+}
+
 function justDont (original, seen) {
-  seen.set(original, original)
   return original
 }
 
@@ -118,6 +137,16 @@ function copyObject (original, seen) {
 
   seen.set(original, copy)
 
+  moveProps(original, copy, seen)
+
+  if (Object.isFrozen(original)) Object.freeze(copy)
+  if (Object.isSealed(original)) Object.seal(copy)
+  if (!Object.isExtensible(original)) Object.preventExtensions(copy)
+
+  return copy
+}
+
+function moveProps (original, copy, seen) {
   Object.getOwnPropertyNames(original).forEach(originalToCopy)
 
   if (typeof Object.getOwnPropertySymbols === 'function') {
@@ -135,8 +164,6 @@ function copyObject (original, seen) {
       // example: the stack of an error object.
     }
   }
-
-  return copy
 }
 
 function toStr (thing) {

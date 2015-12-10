@@ -39,6 +39,19 @@ test('deep-copy', function (t) {
   t.equal(noProtoB.asdf, 'qwerty', 'no proto copy has prop')
   t.equal(typeof noProtoB.toString, 'undefined', 'Does not have a toString')
 
+  var protoA = Object.create(obj)
+  protoA.foo = 'foo'
+  var protoB = copy(protoA)
+  t.equal(Object.getPrototypeOf(protoB).foo.bar, 'baz', 'prototype copied intact')
+
+  var freezeA = Object.freeze(obj)
+  var freezeB = copy(freezeA)
+  t.ok(Object.isFrozen(freezeB), 'does not thaw')
+
+  var sealedA = Object.seal(obj)
+  var sealedB = copy(sealedA)
+  t.ok(Object.isSealed(sealedB), 'does not breake the seal')
+
   // array
   var arrA = [ 1, 2, { asdf: 'aargh' } ]
   var arrB = copy(arrA)
@@ -138,6 +151,40 @@ test('deep-copy', function (t) {
       t.notEqual(typedA, typedB, TypedArr.name + ': not the same obj.')
     })
     t.end()
+  })
+
+  t.test('dom', { skip: typeof Element !== 'function' }, function (t) {
+    document.body.innerHTML = '<div id="foo"><p class="bar">asdf</p></div>'
+    var foo = document.getElementById('foo')
+    var fooB = copy(foo)
+    fooB.querySelector('.bar').innerHTML = 'bar'
+    t.equal(document.querySelector('.bar').innerHTML, 'asdf', 'copy worked')
+
+    var listA = document.querySelectorAll('.bar')
+    var listB = copy(listA)
+    t.notEqual(listA[0], listB[0], 'nodelist elemnts different')
+    t.equal(listB[0].innerHTML, 'asdf', 'contents as expected')
+
+    t.end()
+  })
+
+  t.test('promise', { skip: typeof Promise !== 'function' }, function (t) {
+    var promA = new Promise(function (a) {})
+    var promB = copy(promA)
+    t.equal(promA, promB, 'promises are moved over')
+    t.equal(typeof promB.then, 'function', 'copy result has then?')
+    t.end()
+  })
+
+  t.test('XHR', { skip: typeof XMLHttpRequest !== 'function' }, function (t) {
+    t.plan(1)
+    var xhr = new XMLHttpRequest()
+    xhr.addEventListener('load', function () {
+      var xhrB = copy(xhr)
+      t.ok(xhrB.responseText.length > 1, 'Copies over resonseText')
+    })
+    xhr.open('GET', '/')
+    xhr.send()
   })
 
   t.end()
