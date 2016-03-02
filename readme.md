@@ -1,7 +1,8 @@
 # Universal Copy
 
 Deep copy anything. Works on Objects, Arrays, Sets, Maps, RegExp, Dates,
-TypedArrays, ArrayBuffers, and more.
+TypedArrays, ArrayBuffers, NodeLists, and more. Handles circular references
+correctly.
 
 ```javascript
 var universalCopy = require('universal-copy')

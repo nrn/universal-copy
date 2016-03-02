@@ -13,7 +13,8 @@ var values = {
 
 var howDoICopy = {
   '[object Object]': copyObject,
-  '[object Array]': copyObject,
+  '[object Array]': copyArray,
+  '[object Error]': justDont,
   '[object Map]': copyMap,
   '[object Set]': copySet,
   '[object Date]': copyConstructor,
@@ -103,7 +104,8 @@ function copySlice (original, seen) {
 }
 
 function copyArray (original, seen) {
-  var copy = []
+  var copy = new Array(original.length)
+
   seen.set(original, copy)
   moveProps(original, copy, seen)
   return copy
@@ -120,20 +122,7 @@ function justDont (original, seen) {
 }
 
 function copyObject (original, seen) {
-  var proto = Object.getPrototypeOf(original)
-  var copy
-
-  if (proto == null) {
-    copy = Object.create(null)
-  } else if (has(proto, 'constructor')) {
-    try {
-      copy = new proto.constructor()
-    } catch (e) {
-      copy = Object.create(deepCopy(proto, seen))
-    }
-  } else {
-    copy = Object.create(deepCopy(proto, seen))
-  }
+  var copy = Object.create(Object.getPrototypeOf(original))
 
   seen.set(original, copy)
 
@@ -155,7 +144,9 @@ function moveProps (original, copy, seen) {
 
   function originalToCopy (key) {
     var descriptor = Object.getOwnPropertyDescriptor(original, key)
-    descriptor.value = deepCopy(descriptor.value, seen)
+    if (has(descriptor, 'value')) {
+      descriptor.value = deepCopy(descriptor.value, seen)
+    }
     try {
       Object.defineProperty(copy, key, descriptor)
     } catch (e) {
@@ -175,6 +166,7 @@ function has (thing, prop) {
 }
 
 // Fake map only works for the few scenarios we need it for in this module.
+// it is _not_ a good Map polyfil.
 function FakeMap () {
   if (typeof Map === 'function') return new Map()
   this.keys = []

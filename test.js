@@ -1,3 +1,4 @@
+var Imm = require('immutable')
 var test = require('tape')
 var copy = require('./index')
 
@@ -30,8 +31,7 @@ test('deep-copy', function (t) {
 
   var errA = new TypeError('foo')
   var errB = copy(errA)
-  t.ok(errB instanceof Error, 'err is Error')
-  t.equal(errA.message, errB.message, 'Message is the same')
+  t.equal(errA, errB, 'Error coppies over')
 
   var noProtoA = Object.create(null)
   noProtoA.asdf = 'qwerty'
@@ -71,6 +71,17 @@ test('deep-copy', function (t) {
   t.equal(typedB[0], 102, Buffer.name + ': Correct stuff')
   t.equal(typedA[1], 111, Buffer.name + ': Does not change old array')
   t.notEqual(typedA, typedB, Buffer.name + ': not the same obj.')
+
+  function Custom () {}
+
+  var custA = new Custom()
+  var custB = copy(custA)
+
+  t.ok(custB instanceof Custom, 'Do not break instance of')
+
+  // basic Immutable stuff works
+  t.equal(copy(Imm.Map({ a: 'b' })).set('c', 'd').get('c'), 'd', 'Immutable map')
+  t.equal(copy(Imm.List.of(1, 2, 3)).size, 3, 'Immutable list')
 
   t.test('set and map', { skip: typeof Set !== 'function' }, function (t) {
     // sets and maps
@@ -181,7 +192,7 @@ test('deep-copy', function (t) {
     var xhr = new XMLHttpRequest()
     xhr.addEventListener('load', function () {
       var xhrB = copy(xhr)
-      t.ok(xhrB.responseText.length > 1, 'Copies over resonseText')
+      t.equal(xhr, xhrB, 'moves over XHRRequests')
     })
     xhr.open('GET', '/')
     xhr.send()
